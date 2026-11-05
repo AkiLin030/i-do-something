@@ -249,7 +249,7 @@ class LifeAchievementApp {
     // 帳號認證與 Google 官方認證狀態
     this.authMode = 'login'; // 'login' | 'register'
     this.googleClientIdKey = 'life_google_client_id';
-    this.googleClientId = localStorage.getItem(this.googleClientIdKey) || '';
+    this.googleClientId = localStorage.getItem(this.googleClientIdKey) || '194967263380-lgnf5e2pshtb8a029qnkf39i9doqbqfq.apps.googleusercontent.com';
     this.pendingRegistration = null;
 
     this.initElements();
@@ -1407,8 +1407,13 @@ class LifeAchievementApp {
   initGoogleIdentity() {
     const isFile = window.location.protocol === 'file:';
 
+    if (!window.google?.accounts?.id) {
+      window.addEventListener('load', () => this.initGoogleIdentity(), { once: true });
+      return;
+    }
+
     // 若具備 Client ID 且非 file 協定，初始化官方 GSI
-    if (window.google?.accounts?.id && this.googleClientId && !isFile) {
+    if (this.googleClientId && !isFile) {
       try {
         google.accounts.id.initialize({
           client_id: this.googleClientId,
@@ -1428,7 +1433,7 @@ class LifeAchievementApp {
               shape: 'rectangular',
               text: 'signin_with',
               logo_alignment: 'left',
-              width: 320
+              width: 300
             }
           );
           if (this.btnGoogleLogin) this.btnGoogleLogin.style.display = 'none';
