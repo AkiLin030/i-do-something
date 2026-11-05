@@ -1469,7 +1469,32 @@ class LifeAchievementApp {
       return;
     }
 
-    const { sub, email, name, picture, email_verified } = payload;
+    // 🛡️ 防禦坑 2：嚴格校驗 aud (受眾 Client ID)，拒絕跨 App 偽造攻擊
+    if (payload.aud !== this.googleClientId) {
+      this.showAuthAlert('安全防護攔截：此憑證非本應用簽發（aud 不相符），拒絕跨站偽造。', 'error');
+      return;
+    }
+
+    // 🛡️ 防禦坑 2：驗證簽發者 (iss)
+    const validIssuers = ['https://accounts.google.com', 'accounts.google.com'];
+    if (!validIssuers.includes(payload.iss)) {
+      this.showAuthAlert('安全防護攔截：此憑證非 Google 官方簽發 (iss 不符)。', 'error');
+      return;
+    }
+
+    // 🛡️ 防禦坑 2：驗證過期時間 (exp)
+    if (payload.exp && payload.exp * 1000 < Date.now()) {
+      this.showAuthAlert('此 Google 登入憑證已過期，請重新嘗試登入。', 'error');
+      return;
+    }
+
+    // 🛡️ 防禦坑 3：強制檢查 email_verified 必須為 true，避免帳號劫持
+    if (!payload.email_verified) {
+      this.showAuthAlert('此 Google 帳戶的電子郵件尚未完成 Google 官方驗證，無法登入。', 'error');
+      return;
+    }
+
+    const { sub, email, name, picture } = payload;
     let users = this.loadUsers();
     let user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
 
@@ -1482,16 +1507,18 @@ class LifeAchievementApp {
         avatarLetter: name ? name.charAt(0).toUpperCase() : 'G',
         bgColor: '#3B82F6',
         provider: 'google',
-        email_verified: !!email_verified,
+        email_verified: true,
         googleSub: sub,
         createdAt: new Date().toISOString()
       };
       users.push(user);
     } else {
+      // 既有帳號更新 Google 資訊，保留既有密碼與設定，不發生覆蓋劫持
       user.name = name || user.name;
       user.avatar = picture || user.avatar;
-      user.email_verified = !!email_verified;
-      user.provider = 'google';
+      user.email_verified = true;
+      user.googleSub = sub;
+      if (!user.provider) user.provider = 'google';
     }
 
     this.saveUsers(users);
@@ -1500,8 +1527,8 @@ class LifeAchievementApp {
 
     this.triggerAchievementToast({
       icon: '🎉',
-      name: 'Google 官方授權登入成功',
-      desc: `歡迎回來，${user.name}！已安全驗證並同步足跡。`
+      name: 'Google 官方安全授權成功',
+      desc: `歡迎回來，${user.name}！已通過 aud 與 email_verified 安全檢驗。`
     });
   }
 
