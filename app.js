@@ -55,6 +55,16 @@ function parseJwt(token) {
   }
 }
 
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 // 四大生活類型定義
 const TYPE_CONFIG = {
   housework: { name: '家事生活', shortName: '家事', color: '#10B981' },
@@ -453,6 +463,13 @@ class LifeAchievementApp {
     this.profileStatRecords = document.getElementById('profileStatRecords');
     this.profileStatDays = document.getElementById('profileStatDays');
     this.profileStatBadges = document.getElementById('profileStatBadges');
+    this.syncStatusDot = document.getElementById('syncStatusDot');
+    this.syncStatusTitle = document.getElementById('syncStatusTitle');
+    this.syncSubtext = document.getElementById('syncSubtext');
+    this.backupRecordCount = document.getElementById('backupRecordCount');
+    this.btnExportCsv = document.getElementById('btnExportCsv');
+    this.btnExportJson = document.getElementById('btnExportJson');
+    this.btnLoginFromProfile = document.getElementById('btnLoginFromProfile');
     this.btnSwitchAccount = document.getElementById('btnSwitchAccount');
     this.btnLogoutAccount = document.getElementById('btnLogoutAccount');
   }
@@ -538,13 +555,9 @@ class LifeAchievementApp {
 
     this.btnSaveEditRecord.addEventListener('click', () => this.onSaveEditedRecord());
 
-    // 帳號按鈕點擊：未登入跳登入，已登入跳個人同步中心
+    // 帳號按鈕點擊：開啟個人同步中心（訪客與已登入皆可檢視資料並下載生活備份）
     const handleAccountClick = () => {
-      if (this.currentUser) {
-        this.openUserProfileModal();
-      } else {
-        this.openAuthModal('login');
-      }
+      this.openUserProfileModal();
     };
     if (this.btnUserAccount) this.btnUserAccount.addEventListener('click', handleAccountClick);
     if (this.btnUserAccountGallery) this.btnUserAccountGallery.addEventListener('click', handleAccountClick);
@@ -605,6 +618,20 @@ class LifeAchievementApp {
     if (this.modalUserProfile) {
       this.modalUserProfile.addEventListener('click', (e) => {
         if (e.target === this.modalUserProfile) this.closeUserProfileModal();
+      });
+    }
+
+    // 生活備份匯出事件
+    if (this.btnExportCsv) {
+      this.btnExportCsv.addEventListener('click', () => this.exportRecordsCsv());
+    }
+    if (this.btnExportJson) {
+      this.btnExportJson.addEventListener('click', () => this.exportRecordsJson());
+    }
+    if (this.btnLoginFromProfile) {
+      this.btnLoginFromProfile.addEventListener('click', () => {
+        this.closeUserProfileModal();
+        this.openAuthModal('login');
       });
     }
 
@@ -818,8 +845,9 @@ class LifeAchievementApp {
 
       items.forEach(act => {
         const typeInfo = TYPE_CONFIG[act.type] || TYPE_CONFIG.housework;
-        // 所有只要有備註的都直接取代原本選項的名字，一個框內單行顯示
-        const displayText = (act.note && act.note.trim()) ? act.note.trim() : act.name;
+        const actName = act.name || '未命名努力';
+        // 若有備註且不重複活動名稱，以淡色文字接在名稱後方顯示
+        const actNote = (act.note && act.note.trim() && act.note.trim() !== actName) ? act.note.trim() : '';
 
         const swipeWrapper = document.createElement('div');
         swipeWrapper.className = 'record-swipe-wrapper';
@@ -838,7 +866,8 @@ class LifeAchievementApp {
 
         deleteAction.addEventListener('click', (e) => {
           e.stopPropagation();
-          if (confirm(`確定要刪除「${displayText}」這筆紀錄嗎？`)) {
+          const confirmTitle = actNote ? `${actName} (${actNote})` : actName;
+          if (confirm(`確定要刪除「${confirmTitle}」這筆紀錄嗎？`)) {
             this.records = this.records.filter(r => r.id !== act.id);
             this.saveRecords();
             this.renderAll();
@@ -848,13 +877,15 @@ class LifeAchievementApp {
         const swipeContent = document.createElement('div');
         swipeContent.className = 'record-swipe-content';
 
-        // 統一風格的向量線條 Icon + 單行文字呈現，完全移除時間與副標
+        // 統一風格的向量線條 Icon + 活動名稱 (粗白) + 淡色備註 (名稱後方單行淡灰顯示)
         swipeContent.innerHTML = `
           <div class="item-main-row">
             <span class="item-line-icon" style="color: ${typeInfo.color}; background: ${typeInfo.color}18;">
               ${getIconSvg(act.icon, act.type)}
             </span>
-            <span class="item-single-text">${displayText}</span>
+            <div class="item-single-text">
+              <span class="item-name-text">${escapeHtml(actName)}</span>${actNote ? `<span class="item-note-subtle">${escapeHtml(actNote)}</span>` : ''}
+            </div>
           </div>
         `;
 
@@ -1100,10 +1131,12 @@ class LifeAchievementApp {
     const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
     const dateStr = this.formatDate(this.modalTargetDate);
 
-    const note = this.inputCustomNote.value.trim() || this.selectedPreset.name;
+    const note = this.inputCustomNote.value.trim();
 
     // 記住使用者寫過的備註，下次自動變成常用細節標籤！
-    this.recordTagHistory(this.selectedPreset.id, note);
+    if (note && note !== this.selectedPreset.name) {
+      this.recordTagHistory(this.selectedPreset.id, note);
+    }
 
     const newRecord = {
       id: 'act-' + Date.now(),
@@ -1190,7 +1223,7 @@ class LifeAchievementApp {
     }
 
     const isPermanent = this.chkSaveToPresets.checked;
-    const note = this.inputCustomDetailNote.value.trim() || name;
+    const note = this.inputCustomDetailNote.value.trim();
 
     const now = new Date();
     const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
@@ -1210,7 +1243,9 @@ class LifeAchievementApp {
       this.presets.push(newPreset);
       this.savePresets();
       this.selectedPreset = newPreset;
-      this.recordTagHistory(newPresetId, note);
+      if (note && note !== name) {
+        this.recordTagHistory(newPresetId, note);
+      }
     }
 
     // 建立今日紀錄
@@ -1276,7 +1311,7 @@ class LifeAchievementApp {
     const target = this.records.find(r => r.id === this.editingRecordId);
     if (target) {
       target.name = name;
-      target.note = this.inputEditNote.value.trim() || name;
+      target.note = this.inputEditNote.value.trim();
       target.type = this.editingRecordType;
       this.saveRecords();
       this.closeEditModal();
@@ -1750,43 +1785,146 @@ class LifeAchievementApp {
 
   openUserProfileModal() {
     if (!this.currentUser) {
-      this.openAuthModal('login');
-      return;
-    }
-
-    if (this.profileLargeAvatar) {
-      if (this.currentUser.avatar) {
-        this.profileLargeAvatar.innerHTML = `<img src="${this.currentUser.avatar}" alt="${this.currentUser.name}">`;
-        this.profileLargeAvatar.style.backgroundColor = 'transparent';
-      } else {
-        const letter = this.currentUser.avatarLetter || this.currentUser.name.charAt(0).toUpperCase();
-        const bg = this.currentUser.bgColor || '#3B82F6';
-        this.profileLargeAvatar.innerHTML = `<span>${letter}</span>`;
-        this.profileLargeAvatar.style.backgroundColor = bg;
+      if (this.profileLargeAvatar) {
+        this.profileLargeAvatar.innerHTML = `<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+        this.profileLargeAvatar.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
       }
-    }
+      if (this.profileDisplayName) this.profileDisplayName.textContent = '訪客模式';
+      if (this.profileProviderTag) this.profileProviderTag.innerHTML = `💾 本機儲存`;
+      if (this.profileEmailText) this.profileEmailText.textContent = '資料安全保存在您的此台瀏覽器中';
 
-    if (this.profileDisplayName) this.profileDisplayName.textContent = this.currentUser.name;
-    if (this.profileProviderTag) {
-      if (this.currentUser.provider === 'google') {
-        this.profileProviderTag.innerHTML = `🛡️ Google 官方認證`;
-      } else {
-        this.profileProviderTag.innerHTML = `🛡️ 信箱已安全驗證`;
+      if (this.syncStatusDot) this.syncStatusDot.style.background = '#64748B';
+      if (this.syncStatusTitle) this.syncStatusTitle.textContent = '本機安全保存中 (未連線雲端)';
+      if (this.syncSubtext) this.syncSubtext.textContent = '您的努力紀錄目前保存在本機。登入 Google 帳號即可享有跨裝置雲端備份保護。';
+
+      if (this.btnSwitchAccount) this.btnSwitchAccount.style.display = 'none';
+      if (this.btnLogoutAccount) this.btnLogoutAccount.style.display = 'none';
+      if (this.btnLoginFromProfile) this.btnLoginFromProfile.style.display = 'flex';
+    } else {
+      if (this.profileLargeAvatar) {
+        if (this.currentUser.avatar) {
+          this.profileLargeAvatar.innerHTML = `<img src="${this.currentUser.avatar}" alt="${this.currentUser.name}">`;
+          this.profileLargeAvatar.style.backgroundColor = 'transparent';
+        } else {
+          const letter = this.currentUser.avatarLetter || this.currentUser.name.charAt(0).toUpperCase();
+          const bg = this.currentUser.bgColor || '#3B82F6';
+          this.profileLargeAvatar.innerHTML = `<span>${letter}</span>`;
+          this.profileLargeAvatar.style.backgroundColor = bg;
+        }
       }
+
+      if (this.profileDisplayName) this.profileDisplayName.textContent = this.currentUser.name;
+      if (this.profileProviderTag) {
+        if (this.currentUser.provider === 'google') {
+          this.profileProviderTag.innerHTML = `🛡️ Google 官方認證`;
+        } else {
+          this.profileProviderTag.innerHTML = `🛡️ 信箱已安全驗證`;
+        }
+      }
+      if (this.profileEmailText) this.profileEmailText.textContent = this.currentUser.email;
+
+      if (this.syncStatusDot) this.syncStatusDot.style.background = '#10B981';
+      if (this.syncStatusTitle) this.syncStatusTitle.textContent = '雲端數據加密同步已啟用';
+      if (this.syncSubtext) this.syncSubtext.textContent = '您的每一筆努力足跡與成就皆已即時保存在雲端帳戶中。';
+
+      if (this.btnSwitchAccount) this.btnSwitchAccount.style.display = 'flex';
+      if (this.btnLogoutAccount) this.btnLogoutAccount.style.display = 'flex';
+      if (this.btnLoginFromProfile) this.btnLoginFromProfile.style.display = 'none';
     }
-    if (this.profileEmailText) this.profileEmailText.textContent = this.currentUser.email;
 
     if (this.profileStatRecords) this.profileStatRecords.textContent = this.records.length;
     const uniqueDays = new Set(this.records.map(r => r.date)).size;
     if (this.profileStatDays) this.profileStatDays.textContent = uniqueDays;
     const unlockedBadges = this.achievements.filter(a => a.unlocked).length;
     if (this.profileStatBadges) this.profileStatBadges.textContent = unlockedBadges;
+    if (this.backupRecordCount) this.backupRecordCount.textContent = `${this.records.length} 筆紀錄`;
 
     if (this.modalUserProfile) this.modalUserProfile.classList.add('active');
   }
 
   closeUserProfileModal() {
     if (this.modalUserProfile) this.modalUserProfile.classList.remove('active');
+  }
+
+  // ============================================
+  // 生活備份匯出功能 (CSV 試算表 / JSON 格式)
+  // ============================================
+  exportRecordsCsv() {
+    if (!this.records || this.records.length === 0) {
+      alert('目前尚無生活努力紀錄可匯出');
+      return;
+    }
+
+    // 依日期與時間排序（舊到新，方便試算表檢視時間序）
+    const sorted = [...this.records].sort((a, b) => {
+      if (a.date !== b.date) return a.date.localeCompare(b.date);
+      return (a.time || '').localeCompare(b.time || '');
+    });
+
+    const escapeCsv = (val) => {
+      const s = String(val ?? '');
+      if (s.includes(',') || s.includes('"') || s.includes('\n') || s.includes('\r')) {
+        return `"${s.replace(/"/g, '""')}"`;
+      }
+      return s;
+    };
+
+    const headers = ['日期', '時間', '生活維度', '活動名稱', '備註細節'];
+    const rows = sorted.map(r => {
+      const typeLabel = TYPE_CONFIG[r.type]?.shortName || TYPE_CONFIG[r.type]?.name || r.type || '';
+      const note = (r.note && r.note.trim() && r.note.trim() !== r.name) ? r.note.trim() : (r.note || '');
+      return [
+        escapeCsv(r.date || ''),
+        escapeCsv(r.time || ''),
+        escapeCsv(typeLabel),
+        escapeCsv(r.name || ''),
+        escapeCsv(note)
+      ].join(',');
+    });
+
+    // \uFEFF 是 UTF-8 BOM，確保 Excel 與 Google 試算表打開繁體中文不亂碼
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    this.downloadFile(blob, `我有做事_生活紀錄備份_${todayStr}.csv`);
+  }
+
+  exportRecordsJson() {
+    if (!this.records || this.records.length === 0) {
+      alert('目前尚無生活努力紀錄可匯出');
+      return;
+    }
+
+    const payload = {
+      appName: '我有做事 (Life Achievement)',
+      exportedAt: new Date().toISOString(),
+      version: '1.0',
+      totalRecords: this.records.length,
+      user: this.currentUser ? {
+        name: this.currentUser.name,
+        email: this.currentUser.email,
+        provider: this.currentUser.provider
+      } : {
+        mode: 'guest'
+      },
+      records: this.records
+    };
+
+    const jsonStr = JSON.stringify(payload, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8;' });
+    const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    this.downloadFile(blob, `我有做事_生活紀錄備份_${todayStr}.json`);
+  }
+
+  downloadFile(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   updateUserHeaderUI() {

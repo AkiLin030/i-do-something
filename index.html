@@ -385,10 +385,10 @@
             <!-- 雲端同步卡片 -->
             <div class="sync-status-card">
               <div class="sync-status-header">
-                <div class="sync-dot-live"></div>
-                <span class="sync-status-title">雲端數據加密同步已啟用</span>
+                <div class="sync-dot-live" id="syncStatusDot"></div>
+                <span class="sync-status-title" id="syncStatusTitle">雲端數據加密同步已啟用</span>
               </div>
-              <span class="sync-subtext">您的每一筆努力足跡與成就皆已即時保存在雲端帳戶中。</span>
+              <span class="sync-subtext" id="syncSubtext">您的每一筆努力足跡與成就皆已即時保存在雲端帳戶中。</span>
             </div>
 
             <!-- 努力統計數據 -->
@@ -407,8 +407,49 @@
               </div>
             </div>
 
+            <!-- 下載我的生活備份 (資料匯出) -->
+            <div class="profile-backup-section">
+              <div class="backup-section-header">
+                <div class="backup-title-wrap">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  <span class="backup-section-title">下載我的生活備份</span>
+                </div>
+                <span class="backup-count-badge" id="backupRecordCount">0 筆紀錄</span>
+              </div>
+              <div class="backup-buttons-row">
+                <button type="button" class="backup-export-btn csv-btn" id="btnExportCsv" title="匯出適合 Excel / Google 試算表閱讀的 CSV 檔">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="8" y1="13" x2="16" y2="13"></line>
+                    <line x1="8" y1="17" x2="16" y2="17"></line>
+                  </svg>
+                  <span>匯出 CSV (試算表)</span>
+                </button>
+                <button type="button" class="backup-export-btn json-btn" id="btnExportJson" title="匯出原始結構化 JSON 備份檔">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="16 18 22 12 16 6"></polyline>
+                    <polyline points="8 6 2 12 8 18"></polyline>
+                  </svg>
+                  <span>匯出 JSON</span>
+                </button>
+              </div>
+            </div>
+
             <!-- 功能按鈕群 -->
             <div class="profile-actions-column">
+              <button type="button" class="profile-action-btn primary" id="btnLoginFromProfile" style="display: none;">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                  <polyline points="10 17 15 12 10 7"></polyline>
+                  <line x1="15" y1="12" x2="3" y2="12"></line>
+                </svg>
+                <span>登入 Google 帳號 (啟用跨裝置同步)</span>
+              </button>
               <button type="button" class="profile-action-btn secondary" id="btnSwitchAccount">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
