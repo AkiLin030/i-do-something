@@ -1558,7 +1558,7 @@ class LifeAchievementApp {
     this.triggerAchievementToast({
       icon: '🎉',
       name: 'Google 官方安全授權成功',
-      desc: `歡迎回來，${user.name}！已通過 aud 與 email_verified 安全檢驗。`
+      desc: `歡迎回來，${user.name}！`
     });
   }
 
@@ -1824,8 +1824,8 @@ class LifeAchievementApp {
       if (this.profileEmailText) this.profileEmailText.textContent = this.currentUser.email;
 
       if (this.syncStatusDot) this.syncStatusDot.style.background = '#10B981';
-      if (this.syncStatusTitle) this.syncStatusTitle.textContent = '雲端數據加密同步已啟用';
-      if (this.syncSubtext) this.syncSubtext.textContent = '您的每一筆努力足跡與成就皆已即時保存在雲端帳戶中。';
+      if (this.syncStatusTitle) this.syncStatusTitle.textContent = '雲端數據已同步';
+      if (this.syncSubtext) this.syncSubtext.textContent = '您的足跡已保存在雲端帳戶中。';
 
       if (this.btnSwitchAccount) this.btnSwitchAccount.style.display = 'flex';
       if (this.btnLogoutAccount) this.btnLogoutAccount.style.display = 'flex';
