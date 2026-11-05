@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>我有做事</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+
+<body class="dark-theme">
+
+  <!-- 主應用容器 -->
+  <div class="app-container">
+
+    <!-- 主頁面視圖區 -->
+    <main class="app-viewport">
+
+      <!-- ============================================== -->
+      <!-- 畫面 1: 生活足跡 (主月曆與紀錄清單)             -->
+      <!-- ============================================== -->
+      <section id="screen-footprint" class="screen-view active">
+        <!-- 頂部月份欄位 (完全固定，呼應參考圖極簡風格) -->
+        <header class="app-header">
+          <div class="header-utility-bar">
+            <div class="header-tools">
+              <button class="header-icon-btn" id="btnQuickAchievements" title="成就速覽">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path
+                    d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.45 1-1 1H8v4h8v-4h-1c-.55 0-1-.45-1-1v-2.34c3.48-.9 6-4.04 6-7.66V4H4v6c0 3.62 2.52 6.76 6 7.66z" />
+                </svg>
+              </button>
+              <button class="header-icon-btn header-user-btn" id="btnUserAccount" title="帳號與雲端同步">
+                <div class="header-avatar-circle" id="headerAvatarCircle">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                </div>
+                <span class="user-status-dot" id="headerUserStatusDot"></span>
+              </button>
+            </div>
+          </div>
+
+          <div class="month-selector">
+            <button class="nav-arrow-btn" id="btnPrevMonth" title="上個月">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.6"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
+            <h2 class="current-month-title" id="currentMonthTitle">2026年11月</h2>
+            <button class="nav-arrow-btn" id="btnNextMonth" title="下個月">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.6"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+          </div>
+        </header>
+
+        <!-- 上方固定月曆區 (固定約佔畫面 1/3，點擊日曆時下方紀錄滑動，日曆完全不動) -->
+        <div class="calendar-fixed-section">
+          <div class="calendar-card">
+            <div class="calendar-weekdays">
+              <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+            </div>
+            <div class="calendar-grid" id="calendarGrid">
+              <!-- JS 生成日期格子，無多餘文字 -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 下方生活足跡獨立滾動區 (已移除天數/足跡統計區塊) -->
+        <div class="records-scroll-container" id="recordsScrollContainer">
+          <!-- 生活足跡標題列 (乾淨無贅字與按鈕) -->
+          <div class="timeline-header">
+            <span class="timeline-title">生活足跡</span>
+          </div>
+
+          <div class="records-container" id="recordsContainer">
+            <!-- JS 生成每日生活紀錄 (單行呈現，有備註直接取代原名稱) -->
+          </div>
+
+          <div class="footer-spacing"></div>
+        </div>
+      </section>
+
+      <!-- ============================================== -->
+      <!-- 畫面 2: 成就展覽室 (一格一格像遊戲收藏區一樣)   -->
+      <!-- ============================================== -->
+      <section id="screen-achievements-gallery" class="screen-view">
+        <header class="app-header gallery-header">
+          <h2 class="gallery-title">🏆 榮譽成就收藏室</h2>
+          <div class="header-tools">
+            <div class="gallery-progress-badge" id="galleryProgressBadge">3 / 8 已解鎖</div>
+            <button class="header-icon-btn header-user-btn" id="btnUserAccountGallery" title="帳號與雲端同步">
+              <div class="header-avatar-circle" id="headerAvatarCircleGallery">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              </div>
+              <span class="user-status-dot" id="headerUserStatusDotGallery"></span>
+            </button>
+          </div>
+        </header>
+
+        <div class="scroll-container">
+          <!-- 收集進度條 -->
+          <div class="collection-progress-card">
+            <div class="progress-info-row">
+              <span class="progress-label">生活成就解鎖進度</span>
+              <span class="progress-pct" id="galleryProgressPct">37%</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" id="galleryProgressBar" style="width: 37%;"></div>
+            </div>
+          </div>
+
+          <!-- 遊戲收藏品風格成就方格網格 -->
+          <div class="trophy-room-grid" id="trophyRoomGrid">
+            <!-- JS 動態生成一格一格的成就方框 -->
+          </div>
+
+          <div class="footer-spacing"></div>
+        </div>
+      </section>
+
+      <!-- ============================================== -->
+      <!-- 快速記錄彈窗 (常駐預設 + 尾端自訂按鈕)          -->
+      <!-- ============================================== -->
+      <section id="modal-entry" class="entry-modal-overlay">
+        <div class="entry-modal-sheet">
+          <div class="sheet-header">
+            <div class="sheet-title-row">
+              <h3 class="sheet-title">今天做了什麼？</h3>
+              <button class="sheet-close-btn" id="btnCloseEntry">✕</button>
+            </div>
+
+            <!-- 日期切換列 -->
+            <div class="entry-date-bar">
+              <button class="date-arrow" id="btnModalPrevDay">‹</button>
+              <span class="entry-date-text" id="modalDateDisplay">2026/11/04 星期三</span>
+              <button class="date-arrow" id="btnModalNextDay">›</button>
+            </div>
+          </div>
+
+          <div class="sheet-body">
+            <!-- 預設常用選項 (左上角帶灰字分類，末端帶暫時與常駐自訂) -->
+            <div class="presets-section">
+              <span class="section-sub">選擇項目：</span>
+              <div class="presets-grid" id="presetsGrid">
+                <!-- JS 動態生成項目 + "+ 暫時自訂" + "+ 常駐自訂" -->
+              </div>
+            </div>
+
+            <!-- 細節標籤列 (點擊自動帶入備註，且記錄寫過的內容) -->
+            <div class="quick-tags-section" id="sectionQuickTags">
+              <span class="section-sub">常用細節標籤（點擊帶入備註）：</span>
+              <div class="tags-scroll-row" id="modalTagsRow"></div>
+            </div>
+
+            <!-- 備註輸入框 -->
+            <div class="note-input-row">
+              <input type="text" id="inputCustomNote" class="custom-note-input" placeholder="寫點備註或心得... (選填)">
+            </div>
+          </div>
+
+          <div class="sheet-footer">
+            <button class="btn-confirm-record" id="btnConfirmRecord">
+              <span>記下這份努力！</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================== -->
+      <!-- 共用自訂項目彈窗 (暫時與常駐共用同一組件)       -->
+      <!-- ============================================== -->
+      <section id="modal-unified-custom" class="custom-preset-modal-overlay">
+        <div class="custom-preset-card">
+          <div class="modal-header">
+            <h3 id="unifiedCustomTitle">自訂生活項目</h3>
+            <button class="modal-close-btn" id="btnCloseUnifiedCustom">✕</button>
+          </div>
+          <div class="modal-body-scroll">
+            <label class="input-label">項目名稱：</label>
+            <input type="text" id="inputCustomName" class="custom-note-input" placeholder="例如：手沖咖啡、幫朋友搬家、換冷氣濾網">
+
+            <label class="input-label" style="margin-top: 12px;">生活類型：</label>
+            <div class="type-picker-row" id="customTypePicker">
+              <button class="type-pick-btn active" data-type="housework">🏠 家事</button>
+              <button class="type-pick-btn" data-type="outing">🎉 出去玩</button>
+              <button class="type-pick-btn" data-type="work">💼 工作</button>
+              <button class="type-pick-btn" data-type="health">⚡ 健康</button>
+            </div>
+
+            <label class="input-label" style="margin-top: 12px;">挑選圖標：</label>
+            <div class="icon-picker-grid" id="customIconPickerGrid">
+              <!-- JS 生成圖標選項 -->
+            </div>
+
+            <!-- 是否存入常駐清單的勾選開關 -->
+            <div class="permanent-toggle-box">
+              <label class="checkbox-label">
+                <input type="checkbox" id="chkSaveToPresets" class="custom-checkbox">
+                <span class="checkbox-text">新增至預設按鈕清單（方便日後快速點選）</span>
+              </label>
+              <span class="toggle-subhint" id="toggleSubhint">未勾選時為「暫時自訂」，只記錄在今天，不佔用預設按鈕版面。</span>
+            </div>
+
+            <label class="input-label" style="margin-top: 12px;">細節或備註：</label>
+            <input type="text" id="inputCustomDetailNote" class="custom-note-input" placeholder="可填寫細項標籤... (選填)">
+          </div>
+          <div class="modal-footer">
+            <button class="btn-confirm-record" id="btnSubmitUnifiedCustom">
+              <span id="btnSubmitCustomText">確認記錄</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================== -->
+      <!-- 直接點擊編輯紀錄彈窗 (免筆圖示，點了直接改)     -->
+      <!-- ============================================== -->
+      <section id="modal-edit-record" class="custom-preset-modal-overlay">
+        <div class="custom-preset-card">
+          <div class="modal-header">
+            <h3>編輯這筆努力</h3>
+            <button class="modal-close-btn" id="btnCloseEditModal">✕</button>
+          </div>
+          <div class="modal-body-scroll">
+            <label class="input-label">活動名稱：</label>
+            <input type="text" id="inputEditName" class="custom-note-input">
+
+            <label class="input-label" style="margin-top: 12px;">備註或細節：</label>
+            <input type="text" id="inputEditNote" class="custom-note-input">
+
+            <label class="input-label" style="margin-top: 12px;">所屬類型：</label>
+            <div class="type-picker-row" id="editTypePicker">
+              <button class="type-pick-btn" data-type="housework">🏠 家事</button>
+              <button class="type-pick-btn" data-type="outing">🎉 出去玩</button>
+              <button class="type-pick-btn" data-type="work">💼 工作</button>
+              <button class="type-pick-btn" data-type="health">⚡ 健康</button>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-confirm-record" id="btnSaveEditRecord">
+              <span>儲存修改</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================== -->
+      <!-- 帳號登入 / 註冊彈窗 (真實 Google 登入 + Email 驗證)-->
+      <!-- ============================================== -->
+      <section id="modal-auth" class="custom-preset-modal-overlay">
+        <div class="auth-card">
+          <div class="modal-header">
+            <div class="auth-title-group">
+              <h3 id="authModalTitle">我有做事</h3>
+              <span class="auth-modal-sub">同步你的每一份努力，換裝置紀錄也不丟失</span>
+            </div>
+            <button class="modal-close-btn" id="btnCloseAuthModal">✕</button>
+          </div>
+
+          <div class="auth-modal-body">
+            <!-- Google 官方登入區塊 -->
+            <div class="google-auth-wrapper" id="googleAuthWrapper">
+              <div id="googleRealBtnContainer" class="google-real-btn-box"></div>
+              
+              <button type="button" class="btn-google-auth" id="btnGoogleLogin">
+                <svg class="google-svg-icon" viewBox="0 0 48 48" width="20" height="20">
+                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                </svg>
+                <span id="btnGoogleLoginText">使用 Google 帳號快速登入</span>
+              </button>
+            </div>
+
+            <div class="auth-divider">
+              <span>或使用 Email 帳號</span>
+            </div>
+
+            <!-- 登入 / 註冊 切換 Tab -->
+            <div class="auth-tab-switch">
+              <button type="button" class="auth-tab-btn active" id="btnTabLogin" data-mode="login">登入</button>
+              <button type="button" class="auth-tab-btn" id="btnTabRegister" data-mode="register">註冊新帳號</button>
+            </div>
+
+            <!-- 錯誤/成功訊息提示框 -->
+            <div class="auth-alert-box" id="authAlertBox" style="display: none;"></div>
+
+            <!-- 表單欄位 -->
+            <form id="formAuth" onsubmit="return false;" novalidate>
+              <div class="form-group" id="groupRegisterName" style="display: none;">
+                <label class="input-label">暱稱或姓名：</label>
+                <input type="text" id="inputAuthName" class="custom-note-input" placeholder="例如：我不是廢物">
+              </div>
+
+              <div class="form-group">
+                <label class="input-label">電子信箱 (Email)：</label>
+                <input type="email" id="inputAuthEmail" class="custom-note-input" placeholder="name@example.com" autocomplete="email">
+              </div>
+
+              <div class="form-group">
+                <label class="input-label">密碼：</label>
+                <div class="password-input-wrapper">
+                  <input type="password" id="inputAuthPassword" class="custom-note-input" placeholder="至少 6 個字元" autocomplete="current-password">
+                  <button type="button" class="btn-toggle-pwd" id="btnTogglePassword" title="顯示/隱藏密碼">
+                    <svg id="svgEyeOpen" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  </button>
+                </div>
+                <!-- 註冊時即時顯示密碼強度 -->
+                <div class="pwd-strength-bar" id="pwdStrengthBar" style="display: none;">
+                  <div class="strength-indicator"><div class="strength-meter" id="strengthMeter"></div></div>
+                  <span class="strength-label" id="strengthLabel">密碼強度：弱</span>
+                </div>
+              </div>
+
+              <!-- 註冊時的密碼二次確認 (防止手殘輸錯密碼) -->
+              <div class="form-group" id="groupRegisterConfirmPwd" style="display: none;">
+                <label class="input-label">確認密碼：</label>
+                <input type="password" id="inputAuthConfirmPassword" class="custom-note-input" placeholder="請再次輸入相同密碼" autocomplete="new-password">
+              </div>
+
+              <button type="submit" class="btn-confirm-record auth-submit-btn" id="btnSubmitAuth">
+                <span id="txtSubmitAuth">登入帳號</span>
+              </button>
+            </form>
+
+            <button type="button" class="btn-guest-continue" id="btnGuestContinue">
+              <span>暫不登入，以訪客身份繼續</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+
+
+      <!-- ============================================== -->
+      <!-- 個人帳號與雲端同步中心彈窗                      -->
+      <!-- ============================================== -->
+      <section id="modal-user-profile" class="custom-preset-modal-overlay">
+        <div class="auth-card profile-card">
+          <div class="modal-header">
+            <h3>個人帳號與同步中心</h3>
+            <button class="modal-close-btn" id="btnCloseProfileModal">✕</button>
+          </div>
+
+          <div class="profile-modal-body">
+            <!-- 使用者卡片 -->
+            <div class="profile-hero">
+              <div class="profile-avatar-large" id="profileLargeAvatar">
+                <!-- 圖片或首字 -->
+              </div>
+              <div class="profile-hero-info">
+                <div class="profile-name-row">
+                  <h4 class="profile-display-name" id="profileDisplayName">我不是廢物</h4>
+                  <span class="profile-provider-tag" id="profileProviderTag">Google 登入</span>
+                </div>
+                <span class="profile-email-text" id="profileEmailText">user@gmail.com</span>
+              </div>
+            </div>
+
+            <!-- 雲端同步卡片 -->
+            <div class="sync-status-card">
+              <div class="sync-status-header">
+                <div class="sync-dot-live"></div>
+                <span class="sync-status-title">雲端數據加密同步已啟用</span>
+              </div>
+              <span class="sync-subtext">您的每一筆努力足跡與成就皆已即時保存在雲端帳戶中。</span>
+            </div>
+
+            <!-- 努力統計數據 -->
+            <div class="profile-stats-grid">
+              <div class="profile-stat-box">
+                <span class="stat-number" id="profileStatRecords">0</span>
+                <span class="stat-label">累積努力足跡</span>
+              </div>
+              <div class="profile-stat-box">
+                <span class="stat-number" id="profileStatDays">0</span>
+                <span class="stat-label">努力記錄天數</span>
+              </div>
+              <div class="profile-stat-box">
+                <span class="stat-number" id="profileStatBadges">0</span>
+                <span class="stat-label">已解鎖成就</span>
+              </div>
+            </div>
+
+            <!-- 功能按鈕群 -->
+            <div class="profile-actions-column">
+              <button type="button" class="profile-action-btn secondary" id="btnSwitchAccount">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="8.5" cy="7" r="4" />
+                  <line x1="20" y1="8" x2="20" y2="14" />
+                  <line x1="23" y1="11" x2="17" y2="11" />
+                </svg>
+                <span>切換其他帳號</span>
+              </button>
+              <button type="button" class="profile-action-btn danger" id="btnLogoutAccount">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+                <span>登出目前帳號</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- 底部常駐導航 (左邊足跡、中央大加號、右邊成就頁面) -->
+    <nav class="bottom-dock">
+      <button class="dock-btn active" id="dockBtnFootprint" title="生活足跡">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.3">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+          <polyline points="9 22 9 12 15 12 15 22" />
+        </svg>
+        <span>足跡</span>
+      </button>
+
+      <!-- 中央懸浮大加號按鈕 -->
+      <button class="dock-add-btn" id="btnOpenEntry" title="記錄今天做的事">
+        <div class="add-circle">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#FFF" stroke-width="3.5"
+            stroke-linecap="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+        </div>
+      </button>
+
+      <button class="dock-btn" id="dockBtnGallery" title="切換至成就收藏展覽室">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.3">
+          <path
+            d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.45 1-1 1H8v4h8v-4h-1c-.55 0-1-.45-1-1v-2.34c3.48-.9 6-4.04 6-7.66V4H4v6c0 3.62 2.52 6.76 6 7.66z" />
+        </svg>
+        <span>成就</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
