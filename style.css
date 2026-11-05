@@ -1357,6 +1357,20 @@ body.dark-theme {
 
 .auth-submit-btn {
   margin-top: 6px;
+  background: #FFFFFF !important;
+  color: #111827 !important;
+  border: 1px solid #E5E7EB;
+  font-weight: 800;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.auth-submit-btn:hover {
+  background: #F9FAFB !important;
+}
+
+.auth-submit-btn:active {
+  background: #F3F4F6 !important;
+  transform: scale(0.98);
 }
 
 .btn-guest-continue {
@@ -1626,14 +1640,20 @@ body.dark-theme {
 }
 
 .profile-action-btn.primary {
-  background: var(--color-brand);
-  color: #000;
-  border-color: var(--color-brand);
+  background: #FFFFFF;
+  color: #111827;
+  border: 1px solid #E5E7EB;
   font-weight: 800;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+.profile-action-btn.primary:hover {
+  background: #F9FAFB;
 }
 
 .profile-action-btn.primary:active {
-  background: var(--color-brand-pressed);
+  background: #F3F4F6;
+  transform: scale(0.98);
 }
 
 .profile-action-btn.danger {

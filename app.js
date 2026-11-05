@@ -1457,7 +1457,7 @@ class LifeAchievementApp {
           google.accounts.id.renderButton(
             this.googleRealBtnContainer,
             {
-              theme: 'filled_black',
+              theme: 'outline',
               size: 'large',
               type: 'standard',
               shape: 'rectangular',
