@@ -1,0 +1,7 @@
+# AI Agent 本地工具庫與設定
+.agents/
+.gemini/
+
+# 系統暫存檔
+.DS_Store
+Thumbs.db
