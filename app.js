@@ -172,39 +172,23 @@ const ACHIEVEMENTS = [
   }
 ];
 
-// 初始示範資料
+// 初始示範資料 (依使用者指示：僅保留一筆，備註為「範例資料」)
 function generateInitialRecords() {
   const today = new Date();
   const y = today.getFullYear();
   const m = String(today.getMonth() + 1).padStart(2, '0');
-  const fmt = (day) => `${y}-${m}-${String(day).padStart(2, '0')}`;
+  const d = String(today.getDate()).padStart(2, '0');
 
   return [
-    // 今天 (多件家事，主要為綠色)
-    { id: 'act-1', date: fmt(today.getDate()), time: '09:00', name: '努力早起', icon: 'early', type: 'health', note: '8點前起床沒賴床' },
-    { id: 'act-2', date: fmt(today.getDate()), time: '10:30', name: '洗衣服', icon: 'laundry', type: 'housework', note: '洗床單＋丟洗衣機' },
-    { id: 'act-3', date: fmt(today.getDate()), time: '11:15', name: '曬衣服', icon: 'hang', type: 'housework', note: '曬衣服＋曬被子' },
-    { id: 'act-4', date: fmt(today.getDate()), time: '13:00', name: '洗碗', icon: 'dishes', type: 'housework', note: '手洗乾淨' },
-    { id: 'act-5', date: fmt(today.getDate()), time: '15:30', name: '出門散步', icon: 'walk', type: 'outing', note: '公園曬曬太陽' },
-
-    // 昨天 (休閒，紅色)
-    { id: 'act-6', date: fmt(Math.max(1, today.getDate() - 1)), time: '12:00', name: '吃頓好料', icon: 'dine', type: 'outing', note: '美味義大利麵' },
-    { id: 'act-7', date: fmt(Math.max(1, today.getDate() - 1)), time: '15:00', name: '休閒娛樂', icon: 'movie', type: 'outing', note: '看了一部好看的電影' },
-    { id: 'act-8', date: fmt(Math.max(1, today.getDate() - 1)), time: '19:00', name: '放空充能', icon: 'rest', type: 'outing', note: '聽音樂放鬆' },
-
-    // 前天 (工作，白色)
-    { id: 'act-9', date: fmt(Math.max(1, today.getDate() - 2)), time: '10:00', name: '專注工作', icon: 'work', type: 'work', note: '搞定核心架構代碼' },
-    { id: 'act-10', date: fmt(Math.max(1, today.getDate() - 2)), time: '14:30', name: '閱讀學習', icon: 'study', type: 'work', note: '看了30分鐘新技術書籍' },
-
-    // 8件大滿貫示範
-    { id: 'act-11', date: fmt(Math.max(1, today.getDate() - 4)), time: '08:00', name: '努力早起', icon: 'early', type: 'health', note: '早起' },
-    { id: 'act-12', date: fmt(Math.max(1, today.getDate() - 4)), time: '09:00', name: '洗衣服', icon: 'laundry', type: 'housework', note: '洗衣服' },
-    { id: 'act-13', date: fmt(Math.max(1, today.getDate() - 4)), time: '10:00', name: '曬衣服', icon: 'hang', type: 'housework', note: '曬被子' },
-    { id: 'act-14', date: fmt(Math.max(1, today.getDate() - 4)), time: '11:00', name: '整理房間', icon: 'clean', type: 'housework', note: '吸地拖地' },
-    { id: 'act-15', date: fmt(Math.max(1, today.getDate() - 4)), time: '12:30', name: '洗碗', icon: 'dishes', type: 'housework', note: '洗碗' },
-    { id: 'act-16', date: fmt(Math.max(1, today.getDate() - 4)), time: '15:00', name: '倒垃圾', icon: 'trash', type: 'housework', note: '倒垃圾' },
-    { id: 'act-17', date: fmt(Math.max(1, today.getDate() - 4)), time: '17:00', name: '運動健身', icon: 'exercise', type: 'health', note: '跑步' },
-    { id: 'act-18', date: fmt(Math.max(1, today.getDate() - 4)), time: '21:00', name: '喝足夠水', icon: 'water', type: 'health', note: '2000cc達標' }
+    {
+      id: 'act-sample-1',
+      date: `${y}-${m}-${d}`,
+      time: '10:00',
+      name: '喝足夠水',
+      icon: 'water',
+      type: 'health',
+      note: '範例資料'
+    }
   ];
 }
 
@@ -212,8 +196,8 @@ class LifeAchievementApp {
   constructor() {
     this.usersKey = 'life_users_v1';
     this.currentUserKey = 'life_current_user_v1';
-    this.guestStorageKey = 'life_records_v6';
-    this.guestAchieveKey = 'life_achieve_v6';
+    this.guestStorageKey = 'life_records_v7';
+    this.guestAchieveKey = 'life_achieve_v7';
 
     this.currentUser = this.loadCurrentUser();
     this.storageKey = this.currentUser ? `life_records_${this.currentUser.id}` : this.guestStorageKey;
@@ -312,7 +296,18 @@ class LifeAchievementApp {
       localStorage.setItem(this.storageKey, JSON.stringify(inits));
       return inits;
     }
-    try { return JSON.parse(raw); } catch { return generateInitialRecords(); }
+    try {
+      const parsed = JSON.parse(raw);
+      // 若是舊版全套 18 筆示範資料，自動汰換為單筆「範例資料」
+      if (Array.isArray(parsed) && parsed.length >= 10 && parsed.some(r => r.id === 'act-18')) {
+        const inits = generateInitialRecords();
+        localStorage.setItem(this.storageKey, JSON.stringify(inits));
+        return inits;
+      }
+      return parsed;
+    } catch {
+      return generateInitialRecords();
+    }
   }
 
   saveRecords() {

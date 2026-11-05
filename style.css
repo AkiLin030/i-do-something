@@ -39,6 +39,7 @@ body.dark-theme {
   background: #1C1C1E;
   color: var(--color-text-main);
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -50,6 +51,7 @@ body.dark-theme {
   width: 100%;
   max-width: 480px;
   height: 100vh;
+  height: 100dvh; /* 動態視口高度，完美避開手機瀏覽器網址列與底部虛擬導航列 */
   background: var(--color-bg);
   display: flex;
   flex-direction: column;
@@ -1053,6 +1055,7 @@ body.dark-theme {
   position: relative;
   z-index: 100;
   flex-shrink: 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .dock-btn {
