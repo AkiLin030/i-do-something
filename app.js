@@ -158,7 +158,35 @@ const DEFAULT_PRESETS = [
 // 自訂彈窗可選圖標列表
 const AVAILABLE_ICONS = ['laundry', 'hang', 'dishes', 'trash', 'clean', 'walk', 'movie', 'dine', 'rest', 'work', 'study', 'early', 'exercise', 'water', 'heart', 'star', 'car', 'cart', 'bulb', 'tool', 'music', 'coffee', 'sun', 'smile'];
 
-// 成就系統 (移除所有「解鎖條件:」贅字)
+// 計算連續天數記錄輔助函式 (使用 UTC 確保不受跨日或時區干擾)
+function getConsecutiveStreak(dateStrings) {
+  if (!dateStrings || dateStrings.length === 0) return 0;
+  const uniqueDates = Array.from(new Set(dateStrings)).sort();
+  if (uniqueDates.length === 0) return 0;
+
+  let maxStreak = 1;
+  let currentStreak = 1;
+
+  for (let i = 1; i < uniqueDates.length; i++) {
+    const parts1 = uniqueDates[i - 1].split('-').map(Number);
+    const parts2 = uniqueDates[i].split('-').map(Number);
+    if (parts1.length < 3 || parts2.length < 3) continue;
+
+    const t1 = Date.UTC(parts1[0], parts1[1] - 1, parts1[2]);
+    const t2 = Date.UTC(parts2[0], parts2[1] - 1, parts2[2]);
+    const diffDays = Math.round((t2 - t1) / 86400000);
+
+    if (diffDays === 1) {
+      currentStreak++;
+      if (currentStreak > maxStreak) maxStreak = currentStreak;
+    } else if (diffDays > 1) {
+      currentStreak = 1;
+    }
+  }
+  return maxStreak;
+}
+
+// 成就系統 (移除所有「解鎖條件:」贅字，包含幽默、無俚頭生活成就)
 const ACHIEVEMENTS = [
   { id: 'first_step', name: '踏出第一步', desc: '記錄第一筆生活努力，生活開始有了形狀！', requirement: '記錄第 1 筆生活足跡', icon: '🌱', unlocked: true, condition: acts => acts.length >= 1 },
   {
@@ -168,9 +196,9 @@ const ACHIEVEMENTS = [
       return Object.values(counts).some(c => c >= 8);
     }
   },
-  { id: 'dishes_5', name: '碗盤清道夫', desc: '累計洗碗 5 次，水槽天天亮晶晶！', requirement: '累計完成洗碗 5 次', icon: '🧼', unlocked: false, condition: acts => acts.filter(a => a.name === '洗碗').length >= 5 },
+  { id: 'dishes_5', name: '碗盤清道夫', desc: '累計洗碗 5 次，水槽天天亮晶晶！', requirement: '累計完成洗碗 5 次', icon: '🧼', unlocked: false, condition: acts => acts.filter(a => (a.name && a.name.includes('碗')) || a.icon === 'dishes').length >= 5 },
   { id: 'outing_fun', name: '生活有張有弛', desc: '記錄了出門散步或休閒娛樂，該玩就玩！', requirement: '記錄 1 筆休閒或出去玩項目', icon: '🍿', unlocked: false, condition: acts => acts.some(a => a.type === 'outing') },
-  { id: 'days_7', name: '生活軌跡一週連線', desc: '本月累積有努力記錄的天數達到 7 天', requirement: '單月累積努力天數達 7 天', icon: '🗓️', unlocked: false, condition: acts => new Set(acts.map(a => a.date)).size >= 7 },
+  { id: 'days_7', name: '生活軌跡一週連線', desc: '單月累積有努力記錄的天數達到 7 天', requirement: '單月累積努力天數達 7 天', icon: '🗓️', unlocked: false, condition: acts => new Set(acts.map(a => a.date)).size >= 7 },
   { id: 'work_focus', name: '心流專注大師', desc: '專注工作或閱讀學習累積達 5 次', requirement: '完成工作或學習達 5 次', icon: '💻', unlocked: false, condition: acts => acts.filter(a => a.type === 'work').length >= 5 },
   { id: 'clean_streak', name: '家事達人勳章', desc: '家事生活類項目累計達到 10 次', requirement: '累積完成家事類努力 10 次', icon: '🧹', unlocked: false, condition: acts => acts.filter(a => a.type === 'housework').length >= 10 },
   {
@@ -179,6 +207,206 @@ const ACHIEVEMENTS = [
       const h = parseInt(a.time.split(':')[0], 10);
       return h >= 23 || h < 4;
     })
+  },
+
+  // 使用者指定趣味成就
+  {
+    id: 'maid_for_a_day',
+    name: '一日女僕',
+    desc: '今天到底誰附身？單日竟然完成了 5 件家事，家裡地板都在發光！',
+    requirement: '單日完成 5 件家事項目',
+    icon: '🧹',
+    unlocked: false,
+    condition: acts => {
+      const counts = {};
+      acts.filter(a => a.type === 'housework').forEach(a => { counts[a.date] = (counts[a.date] || 0) + 1; });
+      return Object.values(counts).some(c => c >= 5);
+    }
+  },
+  {
+    id: 'cleaning_demon_streak',
+    name: '3連清潔魔人',
+    desc: '太可怕了！連續 3 天都做家事，衛生股長心甘情願的下台了...等等 誰是衛生股長?',
+    requirement: '連續 3 天皆有家事記錄',
+    icon: '🧽',
+    unlocked: false,
+    condition: acts => {
+      const hwDates = acts.filter(a => a.type === 'housework').map(a => a.date);
+      return getConsecutiveStreak(hwDates) >= 3;
+    }
+  },
+  {
+    id: 'frugal_and_diligent',
+    name: '勤儉持家',
+    desc: '連續 7 天都有努力生活足跡，生活節奏完全拿捏住了！',
+    requirement: '連續 7 天皆有生活記錄',
+    icon: '🪴',
+    unlocked: false,
+    condition: acts => getConsecutiveStreak(acts.map(a => a.date)) >= 7
+  },
+  {
+    id: 'early_bird',
+    name: '早起的鳥',
+    desc: '早起的蟲兒被鳥吃！這個時間點起床做事你不會是失眠了吧?',
+    requirement: '早上 06:00 ~ 07:59 間完成記錄',
+    icon: '🌅',
+    unlocked: false,
+    condition: acts => acts.some(a => {
+      if (!a.time) return false;
+      const h = parseInt(a.time.split(':')[0], 10);
+      return h >= 6 && h <= 7;
+    })
+  },
+  {
+    id: 'night_owl_worker',
+    name: '勤勞的夜貓子',
+    desc: '大家都睡了你還在吸地板？',
+    requirement: '凌晨 01:00 ~ 04:00 間完成家事',
+    icon: '🦇',
+    unlocked: false,
+    condition: acts => acts.some(a => {
+      if (!a.time || a.type !== 'housework') return false;
+      const h = parseInt(a.time.split(':')[0], 10);
+      return h >= 1 && h < 4;
+    })
+  },
+  {
+    id: 'monday_blue_killer',
+    name: '週一症候群剋星',
+    desc: '藍色星期一退散！在最不想動的週一一口氣完成了超過 3 件事！',
+    requirement: '週一單日完成超過 3 件事（至少 4 件）',
+    icon: '⚡',
+    unlocked: false,
+    condition: acts => {
+      const monCounts = {};
+      acts.forEach(a => {
+        const parts = a.date.split('-').map(Number);
+        const d = new Date(parts[0], parts[1] - 1, parts[2]);
+        if (d.getDay() === 1) {
+          monCounts[a.date] = (monCounts[a.date] || 0) + 1;
+        }
+      });
+      return Object.values(monCounts).some(c => c > 3);
+    }
+  },
+  {
+    id: 'not_lying_flat',
+    name: '今天也沒躺平',
+    desc: '整整堅持了連續 30 天！你已經超越全台 99% 想要躺平的人類了！',
+    requirement: '連續 30 天皆有生活記錄',
+    icon: '👑',
+    unlocked: false,
+    condition: acts => getConsecutiveStreak(acts.map(a => a.date)) >= 30
+  },
+
+  // 更多無俚頭生活成就
+  {
+    id: 'water_body',
+    name: '水分補給站',
+    desc: '人體 70% 是水，你今天大概有 85%！累計記錄「喝水」達 10 次！',
+    requirement: '累計記錄喝水達 10 次',
+    icon: '💧',
+    unlocked: false,
+    condition: acts => acts.filter(a => (a.name && a.name.includes('水')) || a.icon === 'water').length >= 10
+  },
+  {
+    id: 'sunlight_photosynthesis',
+    name: '光合作用大師',
+    desc: '走出洞穴吸收維生素 D！累計出門散步或曬太陽達 5 次！',
+    requirement: '出門散步或曬太陽累計達 5 次',
+    icon: '☀️',
+    unlocked: false,
+    condition: acts => acts.filter(a => {
+      const n = a.name || '';
+      return n.includes('曬') || n.includes('散步') || n.includes('公園') || a.icon === 'walk';
+    }).length >= 5
+  },
+  {
+    id: 'clothes_mountain',
+    name: '衣服山征服者',
+    desc: '椅子終於不用當衣架了！累計完成洗衣服或曬衣服達 5 次！',
+    requirement: '累計洗曬衣服達 5 次',
+    icon: '🧺',
+    unlocked: false,
+    condition: acts => acts.filter(a => {
+      const n = a.name || '';
+      return n.includes('衣') || n.includes('被') || ['shirt', 'laundry', 'hang'].includes(a.icon);
+    }).length >= 5
+  },
+  {
+    id: 'trash_terminator',
+    name: '垃圾終結者',
+    desc: '追垃圾車的英姿堪比奧運百米！累計倒垃圾達 5 次！',
+    requirement: '累計完成倒垃圾達 5 次',
+    icon: '🗑️',
+    unlocked: false,
+    condition: acts => acts.filter(a => (a.name && a.name.includes('垃圾')) || a.icon === 'trash').length >= 5
+  },
+  {
+    id: 'midnight_ghost_dishes',
+    name: '午夜幽靈洗碗工',
+    desc: '夜深人靜水龍頭還在響... 晚上 22:00 之後竟然還默默把碗洗乾淨！',
+    requirement: '晚上 22:00 後完成洗碗',
+    icon: '🍽️',
+    unlocked: false,
+    condition: acts => acts.some(a => {
+      if (!a.time) return false;
+      const h = parseInt(a.time.split(':')[0], 10);
+      const n = a.name || '';
+      return (n.includes('碗') || a.icon === 'dishes') && (h >= 22 || h < 4);
+    })
+  },
+  {
+    id: 'all_rounder',
+    name: '跨界全能王',
+    desc: '家事、休閒、工作、健康全包！單日內四種生活維度各完成至少 1 件！',
+    requirement: '單日達成家事、休閒、工作、健康四種維度',
+    icon: '🌈',
+    unlocked: false,
+    condition: acts => {
+      const dayTypes = {};
+      acts.forEach(a => {
+        if (!dayTypes[a.date]) dayTypes[a.date] = new Set();
+        dayTypes[a.date].add(a.type);
+      });
+      return Object.values(dayTypes).some(set => set.has('housework') && set.has('outing') && set.has('work') && set.has('health'));
+    }
+  },
+  {
+    id: 'not_useless_certified',
+    name: '我不是廢物認證',
+    desc: '官方親自頒發！累積努力足跡突破 50 筆，誰再說你廢就拿這個打他臉！',
+    requirement: '累積努力足跡達到 50 筆',
+    icon: '🎖️',
+    unlocked: false,
+    condition: acts => acts.length >= 50
+  },
+  {
+    id: 'life_century',
+    name: '媽！我有好好活著！',
+    desc: '經官方認證，你已連續擊退懶癌 100 次，生活完全在其掌控之中！',
+    requirement: '三個月內累積努力足跡達到 100 筆',
+    icon: '💯',
+    unlocked: false,
+    condition: acts => {
+      // 必須累積達到 100 筆以上
+      if (acts.length < 100) return false;
+      // 取出每筆日期的 UTC 毫秒時間戳並由舊到新排序
+      const timestamps = acts.map(a => {
+        const parts = a.date.split('-').map(Number);
+        return Date.UTC(parts[0], parts[1] - 1, parts[2]);
+      }).sort((a, b) => a - b);
+
+      // 滑動窗口演算法：檢查是否存在任意 100 筆紀錄間隔在 92 天 (~3個月) 內
+      const windowSize = 100;
+      const maxSpanMs = 92 * 86400000;
+      for (let i = windowSize - 1; i < timestamps.length; i++) {
+        if (timestamps[i] - timestamps[i - windowSize + 1] <= maxSpanMs) {
+          return true;
+        }
+      }
+      return false;
+    }
   }
 ];
 
@@ -472,6 +700,16 @@ class LifeAchievementApp {
     this.btnLoginFromProfile = document.getElementById('btnLoginFromProfile');
     this.btnSwitchAccount = document.getElementById('btnSwitchAccount');
     this.btnLogoutAccount = document.getElementById('btnLogoutAccount');
+
+    // 榮譽生活獎狀彈窗 (提案 2)
+    this.modalCertificate = document.getElementById('modal-certificate');
+    this.btnCloseCertModal = document.getElementById('btnCloseCertModal');
+    this.certificateFrame = document.getElementById('certificateFrame');
+    this.certRecipientName = document.getElementById('certRecipientName');
+    this.certStatCount = document.getElementById('certStatCount');
+    this.certIssueDate = document.getElementById('certIssueDate');
+    this.btnDownloadCertPng = document.getElementById('btnDownloadCertPng');
+    this.btnShareCert = document.getElementById('btnShareCert');
   }
 
   bindEvents() {
@@ -648,6 +886,22 @@ class LifeAchievementApp {
           this.logoutUser();
         }
       });
+    }
+
+    // 榮譽生活獎狀事件 (提案 2)
+    if (this.btnCloseCertModal) {
+      this.btnCloseCertModal.addEventListener('click', () => this.closeCertificateModal());
+    }
+    if (this.modalCertificate) {
+      this.modalCertificate.addEventListener('click', (e) => {
+        if (e.target === this.modalCertificate) this.closeCertificateModal();
+      });
+    }
+    if (this.btnDownloadCertPng) {
+      this.btnDownloadCertPng.addEventListener('click', () => this.downloadCertificatePng());
+    }
+    if (this.btnShareCert) {
+      this.btnShareCert.addEventListener('click', () => this.shareCertificate());
     }
   }
 
@@ -1332,18 +1586,20 @@ class LifeAchievementApp {
     this.galleryProgressBar.style.width = `${pct}%`;
 
     this.trophyRoomGrid.innerHTML = this.achievements.map(ach => {
+      const isCentury = (ach.id === 'life_century');
       if (ach.unlocked) {
         return `
-          <div class="trophy-card unlocked">
+          <div class="trophy-card unlocked ${isCentury ? 'century-card' : ''}" data-ach-id="${ach.id}">
             <div class="trophy-pedestal">${ach.icon}</div>
             <div class="trophy-name">${ach.name}</div>
             <div class="trophy-desc">${ach.desc}</div>
+            ${isCentury ? `<button type="button" class="trophy-cert-pill-btn" data-btn-cert="true">🏅 查看榮譽獎狀</button>` : ''}
           </div>
         `;
       } else {
         // 未解鎖：暗化、隱藏名稱為 ???、直接顯示達成條件 (不含「解鎖條件:」)
         return `
-          <div class="trophy-card locked">
+          <div class="trophy-card locked ${isCentury ? 'century-card' : ''}" data-ach-id="${ach.id}">
             <div class="trophy-pedestal">🔒</div>
             <div class="trophy-name">???</div>
             <div class="trophy-desc">${ach.requirement}</div>
@@ -1351,6 +1607,13 @@ class LifeAchievementApp {
         `;
       }
     }).join('');
+
+    // 為百年大獎卡片綁定開獎狀彈窗事件 (解鎖後可點擊卡片或按鈕查看榮譽獎狀)
+    this.trophyRoomGrid.querySelectorAll('.trophy-card.unlocked[data-ach-id="life_century"]').forEach(el => {
+      el.addEventListener('click', () => {
+        this.openCertificateModal();
+      });
+    });
   }
 
   // 頂部右上成就快速速覽彈窗 (同樣移除「解鎖條件:」)
@@ -1927,6 +2190,336 @@ class LifeAchievementApp {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
+  // ============================================
+  // 榮譽生活獎狀功能 (提案 2：100筆生活里程碑)
+  // ============================================
+  openCertificateModal() {
+    if (!this.modalCertificate) return;
+
+    // 受獎人名稱：優先使用 Google/登入者名稱，其次訪客自訂名稱，預設「我不是廢物」
+    let recipient = '我不是廢物';
+    if (this.currentUser && this.currentUser.name) {
+      recipient = this.currentUser.name;
+    } else {
+      const savedNick = localStorage.getItem('life_custom_nickname');
+      if (savedNick && savedNick.trim()) recipient = savedNick.trim();
+    }
+
+    if (this.certRecipientName) {
+      this.certRecipientName.textContent = recipient;
+    }
+
+    if (this.certStatCount) {
+      this.certStatCount.textContent = `${Math.max(100, this.records.length)} 筆`;
+    }
+
+    if (this.certIssueDate) {
+      const now = new Date();
+      this.certIssueDate.textContent = `${now.getFullYear()} 年 ${now.getMonth() + 1} 月 ${now.getDate()} 日`;
+    }
+
+    this.modalCertificate.classList.add('active');
+  }
+
+  closeCertificateModal() {
+    if (this.modalCertificate) {
+      this.modalCertificate.classList.remove('active');
+    }
+  }
+
+  getCertRecipientName() {
+    if (this.currentUser && this.currentUser.name) return this.currentUser.name;
+    const savedNick = localStorage.getItem('life_custom_nickname');
+    if (savedNick && savedNick.trim()) return savedNick.trim();
+    return '我不是廢物';
+  }
+
+  generateCertificateBlob(callback) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1200;
+    canvas.height = 800;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // 1. 深色黑金背景漸層
+    const bgGrad = ctx.createRadialGradient(600, 250, 50, 600, 400, 700);
+    bgGrad.addColorStop(0, '#22222E');
+    bgGrad.addColorStop(1, '#111116');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, 1200, 800);
+
+    // 2. 奢華雙金邊框
+    ctx.strokeStyle = '#D4AF37';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(30, 30, 1140, 740);
+
+    ctx.strokeStyle = '#B38838';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(42, 42, 1116, 716);
+
+    // 四角金質 L 折角花紋
+    const drawCorner = (x, y, dx, dy) => {
+      ctx.strokeStyle = '#FBBF24';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(x, y + dy * 28);
+      ctx.lineTo(x, y);
+      ctx.lineTo(x + dx * 28, y);
+      ctx.stroke();
+    };
+    drawCorner(46, 46, 1, 1);
+    drawCorner(1154, 46, -1, 1);
+    drawCorner(46, 754, 1, -1);
+    drawCorner(1154, 754, -1, -1);
+
+    // 3. 英文小標
+    ctx.fillStyle = '#C5A059';
+    ctx.font = 'bold 15px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('CERTIFICATE OF LIFE ACHIEVEMENT', 600, 110);
+
+    // 4. 中文主標題
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '900 42px sans-serif';
+    ctx.fillText('榮 譽 生 活 證 書', 600, 175);
+
+    // 5. 成就徽章 Pill
+    const badgeText = '「 媽！我有好好活著！ 」';
+    ctx.font = 'bold 22px sans-serif';
+    const textWidth = ctx.measureText(badgeText).width;
+    const pillW = textWidth + 40;
+    const pillH = 44;
+    const pillX = 600 - pillW / 2;
+    const pillY = 205;
+
+    ctx.fillStyle = 'rgba(251, 191, 36, 0.15)';
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(pillX, pillY, pillW, pillH, 22);
+    else ctx.rect(pillX, pillY, pillW, pillH);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(251, 191, 36, 0.45)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = '#FBBF24';
+    ctx.fillText(badgeText, 600, 235);
+
+    // 6. 受獎者姓名
+    const recipient = this.getCertRecipientName();
+
+    ctx.fillStyle = '#9CA3AF';
+    ctx.font = '16px sans-serif';
+    ctx.fillText('受 獎 生 活 家', 600, 295);
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 36px sans-serif';
+    ctx.fillText(recipient, 600, 345);
+
+    // 橫線
+    ctx.strokeStyle = 'rgba(212, 175, 55, 0.35)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(350, 375);
+    ctx.lineTo(850, 375);
+    ctx.stroke();
+
+    // 7. 頒獎內文
+    ctx.fillStyle = '#E5E7EB';
+    ctx.font = '20px sans-serif';
+    ctx.fillText('茲證明該員在三個月內意志堅定、戰勝懶癌，', 600, 425);
+    ctx.fillText('累計完成超過 100 筆 日常生活努力。', 600, 460);
+    ctx.fillText('起居有常、生活自律、能出門能家事，經評鑑具備完全獨立之生活生存能力，', 600, 495);
+    ctx.fillText('特頒此狀，以資證明！', 600, 530);
+
+    // 8. 三格數據方塊
+    const drawStatBox = (x, y, w, h, val, lbl) => {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(x, y, w, h, 8);
+      else ctx.rect(x, y, w, h);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+      ctx.stroke();
+
+      ctx.fillStyle = '#FBBF24';
+      ctx.font = 'bold 22px sans-serif';
+      ctx.fillText(val, x + w / 2, y + 36);
+
+      ctx.fillStyle = '#9CA3AF';
+      ctx.font = '14px sans-serif';
+      ctx.fillText(lbl, x + w / 2, y + 64);
+    };
+    const boxW = 220, boxH = 82;
+    const startX = 600 - (boxW * 3 + 30) / 2;
+    drawStatBox(startX, 565, boxW, boxH, `${Math.max(100, this.records.length)} 筆`, '累積努力足跡');
+    drawStatBox(startX + boxW + 15, 565, boxW, boxH, '90 天內', '考核週期達標');
+    drawStatBox(startX + (boxW + 15) * 2, 565, boxW, boxH, 'SSS 級', '生活自理認證');
+
+    // 9. 日期與印鑑
+    const now = new Date();
+    const dateStr = `${now.getFullYear()} 年 ${now.getMonth() + 1} 月 ${now.getDate()} 日`;
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#9CA3AF';
+    ctx.font = '15px sans-serif';
+    ctx.fillText('認證發布日期：' + dateStr, 90, 715);
+    ctx.fillText('審核單位：我有做事 生活自律管理委員會', 90, 740);
+
+    // 硃砂方印
+    ctx.save();
+    ctx.translate(1030, 705);
+    ctx.rotate(-0.08);
+    ctx.strokeStyle = '#DC2626';
+    ctx.lineWidth = 3.5;
+    ctx.strokeRect(-45, -45, 90, 90);
+    ctx.fillStyle = 'rgba(220, 38, 38, 0.12)';
+    ctx.fillRect(-45, -45, 90, 90);
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#EF4444';
+    ctx.font = '900 19px sans-serif';
+    ctx.fillText('我有做事', 0, -12);
+    ctx.fillText('特許認證', 0, 24);
+    ctx.restore();
+
+    canvas.toBlob(blob => {
+      if (blob && callback) callback(blob);
+    });
+  }
+
+  downloadCertificatePng() {
+    this.generateCertificateBlob(blob => {
+      if (blob) {
+        const recipient = this.getCertRecipientName();
+        this.downloadFile(blob, `我有做事_生活榮譽證書_${recipient}.png`);
+      }
+    });
+  }
+
+  async shareCertificate() {
+    this.generateCertificateBlob(async (blob) => {
+      if (!blob) return;
+
+      const recipient = this.getCertRecipientName();
+      const fileName = `我有做事_生活榮譽證書_${recipient}.png`;
+      const shareTitle = '「媽！我有好好活著！」生活榮譽證書';
+      const shareText = `我在「我有做事」連續擊退懶癌 100 次！榮獲官方認證生活大師證書 🏆 #我有做事 #生活成就`;
+
+      // 優先嘗試：Web Share API 帶圖片檔案直傳 (支援手機版 Instagram 限動/貼文/Threads/LINE 等)
+      if (navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, { type: 'image/png' })] })) {
+        try {
+          const file = new File([blob], fileName, { type: 'image/png' });
+          await navigator.share({
+            title: shareTitle,
+            text: shareText,
+            files: [file]
+          });
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') return; // 使用者主動取消分享
+          console.warn('Web Share with files failed, trying fallback:', err);
+        }
+      }
+
+      // 次選：Web Share API 純文字/URL分享
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: shareTitle,
+            text: shareText,
+            url: window.location.href
+          });
+          this.downloadFile(blob, fileName);
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') return;
+        }
+      }
+
+      // 桌面版或無原生分享支援時的優雅降級 (Fallback):
+      this.downloadFile(blob, fileName);
+      try {
+        await navigator.clipboard.writeText(`${shareText} ${window.location.href}`);
+        alert('✨ 獎狀圖片已為您下載！\n分享文案已複製到剪貼簿，現在可以直接打開 Instagram 或 Threads 發限動/貼文囉！');
+      } catch {
+        alert('✨ 獎狀圖片已為您下載，現在可以直接上傳到 Instagram 限時動態或貼文囉！');
+      }
+    });
+  }
+
+  // 測試專用：一鍵注入 105 筆近 60 天記錄，精確觸發 90 天 100 筆成就
+  testInject100Records() {
+    if (!this._originalRecordsBackup) {
+      this._originalRecordsBackup = [...this.records];
+    }
+
+    const sampleNames = [
+      { name: '整理房間', type: 'housework', icon: 'clean' },
+      { name: '洗衣服+曬被子', type: 'housework', icon: 'shirt' },
+      { name: '洗碗盤', type: 'housework', icon: 'dishes' },
+      { name: '倒垃圾', type: 'housework', icon: 'trash' },
+      { name: '出門散步曬太陽', type: 'outing', icon: 'walk' },
+      { name: '認真閱讀工作', type: 'work', icon: 'book' },
+      { name: '喝足夠水', type: 'health', icon: 'water' },
+      { name: '早起沒賴床', type: 'health', icon: 'clock' }
+    ];
+
+    const today = new Date();
+    const testRecords = [];
+
+    // 產生過去 60 天內均勻分佈的 105 筆努力紀錄（完全滿足 92 天內 100 筆）
+    for (let i = 0; i < 105; i++) {
+      const dayOffset = Math.floor((i / 105) * 60);
+      const d = new Date(today.getTime() - dayOffset * 86400000);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const hour = String(8 + (i % 12)).padStart(2, '0');
+      const min = String((i * 13) % 60).padStart(2, '0');
+
+      const template = sampleNames[i % sampleNames.length];
+      testRecords.push({
+        id: `test-act-${i + 1}`,
+        date: `${y}-${m}-${day}`,
+        time: `${hour}:${min}`,
+        name: template.name,
+        icon: template.icon,
+        type: template.type,
+        note: `測試生活里程碑 #${i + 1}`
+      });
+    }
+
+    this.records = testRecords;
+    this.saveRecords();
+    this.checkAchievements(true);
+    this.renderAll();
+    this.renderTrophyRoom();
+    this.openCertificateModal();
+
+    alert('🎉 已為您注入 105 筆近 60 天的測試記錄！\n「媽！我有好好活著！」成就已正式解鎖！\n您可隨時點擊「↺ 清除測試還原」回到原本資料。');
+  }
+
+  // 測試專用：清除測試資料，還原原本記錄
+  testResetRecords() {
+    if (this._originalRecordsBackup) {
+      this.records = [...this._originalRecordsBackup];
+      this._originalRecordsBackup = null;
+    } else {
+      this.records = generateInitialRecords();
+    }
+    this.saveRecords();
+
+    // 重設成就儲存庫
+    localStorage.removeItem(this.achieveKey);
+    this.achievements = this.loadAchievements();
+    this.checkAchievements(false);
+    this.renderAll();
+    this.renderTrophyRoom();
+    this.closeCertificateModal();
+
+    alert('↺ 測試資料已清除，已還原回原本狀態！');
+  }
+
   updateUserHeaderUI() {
     const applyToBtn = (circleEl, dotEl) => {
       if (!circleEl) return;
@@ -1964,4 +2557,7 @@ class LifeAchievementApp {
 
 window.addEventListener('DOMContentLoaded', () => {
   window.app = new LifeAchievementApp();
+  // 方便使用者與開發者在 Console 快速測試
+  window.test100 = () => window.app?.testInject100Records();
+  window.reset100 = () => window.app?.testResetRecords();
 });

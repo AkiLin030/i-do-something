@@ -1749,3 +1749,342 @@ body.dark-theme {
   border-color: rgba(96, 165, 250, 0.5);
   color: #93C5FD;
 }
+
+/* ===================================================
+   榮譽生活獎狀彈窗樣式 (提案 2)
+   =================================================== */
+.certificate-modal-card {
+  background: #141418;
+  border: 1.5px solid #2C2C34;
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  width: 92%;
+  max-width: 460px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.certificate-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cert-modal-tag {
+  font-size: 13px;
+  font-weight: 800;
+  color: #FBBF24;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 獎狀外框與暗金邊紋 */
+.certificate-frame {
+  position: relative;
+  background: radial-gradient(circle at 50% 20%, #1E1E26 0%, #121216 100%);
+  border: 2px solid #D4AF37;
+  border-radius: 12px;
+  padding: 24px 18px 20px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  box-shadow: inset 0 0 20px rgba(212, 175, 55, 0.08), 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* 四角金質折角裝飾 */
+.cert-border-corner {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-color: #D4AF37;
+  border-style: solid;
+}
+.cert-border-corner.top-left {
+  top: 4px;
+  left: 4px;
+  border-width: 2px 0 0 2px;
+}
+.cert-border-corner.top-right {
+  top: 4px;
+  right: 4px;
+  border-width: 2px 2px 0 0;
+}
+.cert-border-corner.bottom-left {
+  bottom: 4px;
+  left: 4px;
+  border-width: 0 0 2px 2px;
+}
+.cert-border-corner.bottom-right {
+  bottom: 4px;
+  right: 4px;
+  border-width: 0 2px 2px 0;
+}
+
+.cert-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.cert-eng-title {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  color: #C5A059;
+}
+
+.cert-main-title {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  color: #FFFFFF;
+  margin: 0;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+
+.cert-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  color: #FBBF24;
+  background: rgba(251, 191, 36, 0.12);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  border-radius: 20px;
+  padding: 3px 12px;
+  margin-top: 4px;
+}
+
+.cert-recipient-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+  border-top: 1px solid rgba(212, 175, 55, 0.2);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+  padding: 8px 0;
+}
+
+.cert-recip-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #9CA3AF;
+}
+
+.cert-recip-name {
+  font-size: 19px;
+  font-weight: 900;
+  color: #FFFFFF;
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+.cert-citation {
+  font-size: 12px;
+  color: #D1D5DB;
+  line-height: 1.6;
+  margin: 0;
+  padding: 0 4px;
+}
+
+.cert-citation strong {
+  color: #FBBF24;
+  font-weight: 800;
+}
+
+.cert-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  width: 100%;
+}
+
+.cert-stat-item {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 6px;
+  padding: 6px 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.cert-stat-val {
+  font-size: 13px;
+  font-weight: 800;
+  color: #FBBF24;
+}
+
+.cert-stat-lbl {
+  font-size: 9.5px;
+  color: #8E8E93;
+}
+
+.cert-footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding-top: 8px;
+}
+
+.cert-date-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.cert-footer-lbl {
+  font-size: 10px;
+  color: #6B7280;
+}
+
+.cert-footer-val {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #E5E7EB;
+}
+
+/* 官方硃砂紅方印章 */
+.cert-seal-box {
+  width: 58px;
+  height: 58px;
+  border: 2px solid #DC2626;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(-6deg);
+  box-shadow: 0 0 10px rgba(220, 38, 38, 0.25);
+  background: rgba(220, 38, 38, 0.08);
+}
+
+.seal-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.1;
+  font-size: 11px;
+  font-weight: 900;
+  color: #EF4444;
+  letter-spacing: 2px;
+}
+
+/* 獎狀操作區 */
+.certificate-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cert-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+}
+
+.cert-action-btn.primary {
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  color: #000;
+  border: 1px solid #FBBF24;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
+}
+
+.cert-action-btn.primary:hover {
+  filter: brightness(1.1);
+}
+
+.cert-action-btn.primary:active {
+  transform: scale(0.98);
+}
+
+.cert-buttons-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* 一鍵分享按鈕 (支援 IG、Threads、LINE、系統分享選單) */
+.cert-action-btn.share-btn {
+  background: linear-gradient(135deg, #E1306C 0%, #C13584 50%, #833AB4 100%);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 14px rgba(225, 48, 108, 0.35);
+}
+
+.cert-action-btn.share-btn:hover {
+  filter: brightness(1.12);
+}
+
+.cert-action-btn.share-btn:active {
+  transform: scale(0.98);
+}
+
+/* 100筆專屬成就卡 (百年大獎) 特殊樣式 */
+.trophy-card.century-card.locked {
+  border: 1.5px dashed rgba(212, 175, 55, 0.35);
+  background: radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.05) 0%, #141419 100%);
+  opacity: 0.65;
+}
+
+.trophy-card.century-card.locked .trophy-pedestal {
+  background: radial-gradient(circle at 50% 30%, #282214 0%, #171510 100%);
+  border: 1.5px solid rgba(212, 175, 55, 0.5);
+  box-shadow: 0 0 12px rgba(212, 175, 55, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.5);
+  filter: sepia(0.65) saturate(2) brightness(0.9);
+}
+
+.trophy-card.century-card.locked .trophy-name {
+  color: #B39246;
+  letter-spacing: 2px;
+}
+
+.trophy-card.century-card.unlocked {
+  border-color: #D4AF37;
+  background: radial-gradient(circle at 50% 0%, #2A2518 0%, #171720 100%);
+  box-shadow: 0 0 16px rgba(212, 175, 55, 0.25);
+  cursor: pointer;
+}
+
+.trophy-card.century-card.unlocked .trophy-pedestal {
+  border-color: #FBBF24;
+  box-shadow: 0 0 16px rgba(251, 191, 36, 0.4);
+}
+
+.trophy-cert-pill-btn {
+  font-size: 11px;
+  font-weight: 800;
+  color: #000;
+  background: #FBBF24;
+  border: none;
+  border-radius: 12px;
+  padding: 4px 10px;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: transform 0.1s;
+}
+
+.trophy-cert-pill-btn:active {
+  transform: scale(0.96);
+}
